@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bullmq-worker
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: bullmq-worker
+  template:
+    metadata:
+      labels:
+        app: bullmq-worker
+    spec:
+      containers:
+      - name: worker
+        image: bullmq-worker:latest
+        imagePullPolicy: Never
+        env:
+        - name: REDIS_HOST
+          value: "redis-service"
+        - name: REDIS_PORT
+          value: "6379"
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "500m"
+            memory: "256Mi" 
