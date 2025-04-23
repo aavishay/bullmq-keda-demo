@@ -50,8 +50,8 @@ This is a playground project to test KEDA (Kubernetes Event-driven Autoscaling) 
 3. Apply the Kubernetes manifests:
    ```bash
    kubectl apply -f k8s/redis.yaml -n bullmq-test
-   kubectl apply -f k8s/deployment.yaml -n bullmq-test
-   kubectl apply -f k8s/keda-scaledobject.yaml -n bullmq-test
+   kubectl apply -f k8s/keda-scaledjob.yaml -n bullmq-test
+   kubectl apply -f k8s/producer-job.yaml -n bullmq-test
    ```
 
 4. Monitor the scaling:
@@ -69,8 +69,8 @@ This is a playground project to test KEDA (Kubernetes Event-driven Autoscaling) 
    eval $(minikube docker-env)
    docker build -t bullmq-worker:latest .
    
-   # Restart the worker pods
-   kubectl delete pod -l app=bullmq-worker -n bullmq-test
+   # Delete old worker jobs
+   kubectl delete job -l scaledjob.keda.sh/name=bullmq-scaledjob -n bullmq-test
    ```
 
 2. Run the producer to add jobs:
@@ -86,21 +86,17 @@ This is a playground project to test KEDA (Kubernetes Event-driven Autoscaling) 
 
 1. Update KEDA configuration:
    ```bash
-   kubectl apply -f k8s/keda-scaledobject.yaml -n bullmq-test
-   ```
-
-2. Update deployment configuration:
-   ```bash
-   kubectl apply -f k8s/deployment.yaml -n bullmq-test
+   kubectl apply -f k8s/keda-scaledjob.yaml -n bullmq-test
    ```
 
 ## How it Works
 
 - The producer adds jobs to a BullMQ queue
 - The worker processes these jobs with a concurrency of 1 (one job at a time)
-- KEDA monitors the queue length and scales the worker deployment based on the number of pending jobs
-- When there is 1 or more jobs in the wait queue, KEDA will scale up the workers
-- When the queue is empty, KEDA will scale down the workers after the cooldown period
+- KEDA monitors the queue length and creates new worker jobs based on the number of pending jobs
+- When there is 1 or more jobs in the wait queue, KEDA will create new worker jobs
+- Each worker job processes one job and then exits
+- When the queue is empty, no new worker jobs are created
 
 ## Configuration
 
@@ -110,13 +106,13 @@ This is a playground project to test KEDA (Kubernetes Event-driven Autoscaling) 
   - Scale up when there is 1 or more jobs in the wait queue
   - Scale between 0 and 10 replicas
   - Poll the queue every 10 seconds
-  - Wait 30 seconds before scaling down
+  - Keep history of 100 successful and failed jobs
 
 ## Troubleshooting
 
-1. If the worker pods are not starting, check the logs:
+1. If the worker jobs are not starting, check the logs:
    ```bash
-   kubectl logs -l app=bullmq-worker -n bullmq-test
+   kubectl logs -l scaledjob.keda.sh/name=bullmq-scaledjob -n bullmq-test
    ```
 
 2. To check the Redis queue lengths:
@@ -127,9 +123,8 @@ This is a playground project to test KEDA (Kubernetes Event-driven Autoscaling) 
 
 3. To check KEDA scaling status:
    ```bash
-   kubectl get hpa -n bullmq-test
-   kubectl get scaledobject -n bullmq-test
-   ``` 
+   kubectl get scaledjob -n bullmq-test
+   ```
 
 ## Local Development
 

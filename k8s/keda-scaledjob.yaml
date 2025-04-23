@@ -1,0 +1,30 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: bullmq-scaledjob
+  namespace: bullmq-test
+spec:
+  jobTargetRef:
+    template:
+      spec:
+        containers:
+        - name: worker
+          image: bullmq-worker:latest
+          imagePullPolicy: Never
+          env:
+          - name: REDIS_HOST
+            value: redis-service
+          - name: REDIS_PORT
+            value: "6379"
+        restartPolicy: Never
+  pollingInterval: 10
+  successfulJobsHistoryLimit: 100
+  failedJobsHistoryLimit: 100
+  maxReplicaCount: 10
+  triggers:
+    - type: redis
+      metadata:
+        address: redis-service.bullmq-test.svc.cluster.local:6379
+        listName: "bull:test-queue:wait"
+        listLength: "1"
+        activationThreshold: "1"

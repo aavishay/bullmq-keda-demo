@@ -22,4 +22,17 @@ const worker = new Worker(
   }
 );
 
+// Process one job and exit
+worker.on('completed', async (job) => {
+  console.log(`Job ${job.id} completed, exiting...`);
+  await worker.close();
+  process.exit(0);
+});
+
+worker.on('failed', async (job, err) => {
+  console.error(`Job ${job?.id} failed:`, err);
+  await worker.close();
+  process.exit(1);
+});
+
 console.log('Worker started...'); 
