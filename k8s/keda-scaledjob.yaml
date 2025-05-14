@@ -21,10 +21,22 @@ spec:
   successfulJobsHistoryLimit: 100
   failedJobsHistoryLimit: 100
   maxReplicaCount: 10
+  scalingStrategy:
+    multipleScalersCalculation : "sum"
   triggers:
-    - type: redis
-      metadata:
-        address: redis-service.bullmq-test.svc.cluster.local:6379
-        listName: "bull:test-queue:wait"
-        listLength: "1"
-        activationThreshold: "1"
+  - name: wait
+    type: redis
+    metadata:
+      hostFromEnv: REDIS_HOST
+      portFromEnv: REDIS_PORT
+      listName: "bull:test-queue:wait"
+      listLength: "1"
+      activationThreshold: "1"
+  - name: active
+    type: redis
+    metadata:
+      hostFromEnv: REDIS_HOST
+      portFromEnv: REDIS_PORT
+      listName: "bull:test-queue:active"
+      listLength: "1"
+      activationThreshold: "1"
