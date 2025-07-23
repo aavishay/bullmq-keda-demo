@@ -8,35 +8,31 @@ spec:
     template:
       spec:
         containers:
-        - name: worker
-          image: bullmq-worker:latest
-          imagePullPolicy: Never
-          env:
-          - name: REDIS_HOST
-            value: redis-service
-          - name: REDIS_PORT
-            value: "6379"
+          - name: worker
+            image: bullmq-worker:latest
+            imagePullPolicy: Never
+            env:
+              - name: REDIS_HOST
+                value: redis-service
+              - name: REDIS_PORT
+                value: "6379"
         restartPolicy: Never
   pollingInterval: 10
-  successfulJobsHistoryLimit: 100
-  failedJobsHistoryLimit: 100
-  maxReplicaCount: 10
+  successfulJobsHistoryLimit: 10
+  failedJobsHistoryLimit: 10
+  maxReplicaCount: 50
   scalingStrategy:
-    multipleScalersCalculation : "sum"
+    multipleScalersCalculation: "sum"
   triggers:
-  - name: wait
-    type: redis
-    metadata:
-      hostFromEnv: REDIS_HOST
-      portFromEnv: REDIS_PORT
-      listName: "bull:test-queue:wait"
-      listLength: "1"
-      activationThreshold: "1"
-  - name: active
-    type: redis
-    metadata:
-      hostFromEnv: REDIS_HOST
-      portFromEnv: REDIS_PORT
-      listName: "bull:test-queue:active"
-      listLength: "1"
-      activationThreshold: "1"
+    - name: wait
+      type: redis
+      metadata:
+        hostFromEnv: REDIS_HOST
+        portFromEnv: REDIS_PORT
+        listName: "bull:test-queue:wait"
+    - name: active
+      type: redis
+      metadata:
+        hostFromEnv: REDIS_HOST
+        portFromEnv: REDIS_PORT
+        listName: "bull:test-queue:active"
